@@ -25,8 +25,45 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    
+    const db = client.db(process.env.AUTH_DB_NAME)
+    const userCollection = db.collection('user')
+    const doctorCollection = db.collection('doctors')
 
-     const db = client.db(process.env.AUTH_DB_NAME)
+    app.get('/api/users', async (req, res)=> {
+      const result = await userCollection.find().toArray();
+      res.json(result)
+    });
+
+    
+    app.get('/api/doctors', async (req, res) => {
+  try {
+    const query = {};
+
+    if (req.query.doctorId) {
+      query.doctorId = req.query.doctorId;
+    }
+
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+    const result = await doctorCollection.find(query).toArray();
+
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch doctors",
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
