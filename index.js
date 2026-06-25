@@ -1,6 +1,6 @@
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const express = require('express');
 const dotenv = require('dotenv');
@@ -35,7 +35,7 @@ async function run() {
       res.json(result)
     });
 
-    
+
     app.get('/api/doctors', async (req, res) => {
   try {
     const query = {};
@@ -63,6 +63,47 @@ async function run() {
       message: "Failed to fetch doctors",
     });
   }
+});
+app.get("/api/doctors/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await doctorCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+app.get("/api/doctors", async (req, res) => {
+  const query = {};
+
+  if (req.query.doctorId) {
+    query.doctorId = req.query.doctorId;
+  }
+
+  const result = await doctorCollection.find(query).toArray();
+  console.log("Result:", result);
+
+  res.json({
+    success: true,
+    data: result,
+  });
 });
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
