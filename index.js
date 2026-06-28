@@ -105,6 +105,41 @@ app.get("/api/doctors", async (req, res) => {
     data: result,
   });
 });
+
+app.post("/api/doctors", async (req, res) => {
+  try {
+    const doctorData = req.body;
+
+    const existingDoctor = await doctorCollection.findOne({
+      doctorId: doctorData.doctorId,
+    });
+
+    if (existingDoctor) {
+      return res.status(409).json({
+        success: false,
+        message: "Doctor profile already exists",
+      });
+    }
+
+    doctorData.status = "Pending";
+    doctorData.createdAt = new Date();
+
+    const result = await doctorCollection.insertOne(doctorData);
+
+    res.status(201).json({
+      success: true,
+      message: "Doctor profile submitted successfully",
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
