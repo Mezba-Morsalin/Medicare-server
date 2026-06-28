@@ -212,6 +212,39 @@ app.get("/api/payments", async (req, res) => {
     });
   }
 });
+app.patch("/api/payments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { appointmentDate, appointmentSlot } = req.body;
+
+    const filter = {
+      _id: new ObjectId(id),
+    };
+
+    const updateDoc = {
+      $set: {
+        appointmentDate,
+        appointmentSlot,
+      },
+    };
+
+    const result = await paymentCollection.updateOne(filter, updateDoc);
+
+    res.status(200).json({
+      success: true,
+      message: "Appointment rescheduled successfully",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to reschedule appointment",
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
