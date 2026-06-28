@@ -30,6 +30,7 @@ async function run() {
     const userCollection = db.collection('user')
     const doctorCollection = db.collection('doctors')
     const paymentCollection = db.collection('payments')
+    const reviewsCollection = db.collection('reviews')
 
     app.get('/api/users', async (req, res)=> {
       const result = await userCollection.find().toArray();
@@ -37,6 +38,23 @@ async function run() {
     });
 
 
+    app.get("/api/all/doctors", async (req, res) => {
+  try {
+    const doctors = await doctorCollection.find({}).toArray();
+
+    res.status(200).json({
+      success: true,
+      message: "Doctors fetched successfully",
+      data: doctors,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch doctors",
+      error: error.message,
+    });
+  }
+});
     app.get("/api/doctors", async (req, res) => {
   try {
     const query = {};
@@ -268,6 +286,29 @@ app.delete("/api/payments/:id", async (req, res) => {
     res.status(500).send({
       success: false,
       message: error.message,
+    });
+  }
+});
+
+app.post("/api/reviews", async (req, res) => {
+  try {
+    const review = req.body;
+
+    const result = await reviewsCollection.insertOne({
+      ...review,
+      createdAt: new Date(),
+    });
+
+    res.status(201).send({
+      success: true,
+      message: "Review submitted successfully.",
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to submit review.",
+      error: error.message,
     });
   }
 });
