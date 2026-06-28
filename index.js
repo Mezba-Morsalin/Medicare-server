@@ -337,6 +337,45 @@ app.get("/api/reviews", async (req, res) => {
   }
 });
 
+app.patch("/api/reviews/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const review = req.body;
+
+    const result = await reviewsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          doctorId: review.doctorId,
+          doctorName: review.doctorName,
+          doctorImage: review.doctorImage,
+          specialization: review.specialization,
+          rating: review.rating,
+          comment: review.comment,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      return res.send({
+        success: true,
+        message: "Review updated successfully",
+      });
+    }
+
+    res.send({
+      success: false,
+      message: "Review not updated",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
