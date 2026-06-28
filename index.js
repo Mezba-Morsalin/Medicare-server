@@ -245,6 +245,32 @@ app.patch("/api/payments/:id", async (req, res) => {
     });
   }
 });
+app.delete("/api/payments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await paymentCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    res.send({
+      success: true,
+      message: "Appointment cancelled successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
