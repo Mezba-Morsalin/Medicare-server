@@ -375,6 +375,7 @@ app.patch("/api/reviews/:id", async (req, res) => {
     });
   }
 });
+
 app.delete("/api/reviews/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -393,6 +394,43 @@ app.delete("/api/reviews/:id", async (req, res) => {
     res.send({
       success: false,
       message: "Review not found",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.get("/api/home-stats", async (req, res) => {
+  try {
+    const totalDoctors = await doctorCollection.countDocuments();
+
+    const totalPatients = await userCollection.countDocuments({
+      role: "patient",
+    });
+
+    const totalAppointments = await paymentCollection.countDocuments();
+
+    const reviews = await reviewsCollection.find().toArray();
+
+    const averageRating =
+      reviews.length > 0
+        ? (
+            reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
+            reviews.length
+          ).toFixed(1)
+        : 0;
+
+    res.send({
+      success: true,
+      data: {
+        totalDoctors,
+        totalPatients,
+        totalAppointments,
+        averageRating,
+      },
     });
   } catch (error) {
     res.status(500).send({
