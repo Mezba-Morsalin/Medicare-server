@@ -29,6 +29,7 @@ async function run() {
     const db = client.db(process.env.AUTH_DB_NAME)
     const userCollection = db.collection('user')
     const doctorCollection = db.collection('doctors')
+    const paymentCollection = db.collection('payments')
 
     app.get('/api/users', async (req, res)=> {
       const result = await userCollection.find().toArray();
@@ -135,6 +136,43 @@ app.post("/api/doctors", async (req, res) => {
     console.error(error);
 
     res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.post("/api/payments", async (req, res) => {
+  try {
+    const payment = req.body;
+
+    const createdPayment = {
+      patientId: payment.patientId,
+      patientName: payment.patientName,
+      patientEmail: payment.patientEmail,
+
+      doctorId: payment.doctorId,
+      doctorName: payment.doctorName,
+
+      appointmentDate: payment.appointmentDate,
+      appointmentSlot: payment.appointmentSlot,
+      symptoms: payment.symptoms,
+
+      amount: Number(payment.amount),
+
+      stripeSessionId: payment.stripeSessionId,
+      paymentIntentId: payment.paymentIntentId,
+      appointmentStatus: payment.appointmentStatus,
+
+      paymentStatus: "Paid",
+      createdAt: new Date(),
+    };
+
+    const result = await paymentCollection.insertOne(createdPayment);
+
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({
       success: false,
       message: error.message,
     });
