@@ -37,12 +37,12 @@ async function run() {
     });
 
 
-    app.get('/api/doctors', async (req, res) => {
+    app.get("/api/doctors", async (req, res) => {
   try {
     const query = {};
 
     if (req.query.doctorId) {
-      query.doctorId = req.query.doctorId;
+      query._id = new ObjectId(req.query.doctorId);
     }
 
     if (req.query.status) {
@@ -57,13 +57,27 @@ async function run() {
       data: result,
     });
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch doctors",
     });
   }
+});
+
+app.get("/api/doctor", async (req, res) => {
+  const query = {};
+
+  if (req.query.doctorId) {
+    query.doctorId = req.query.doctorId;
+  }
+
+  const result = await doctorCollection.find(query).toArray();
+  console.log("Result:", result);
+
+  res.json({
+    success: true,
+    data: result,
+  });
 });
 app.get("/api/doctors/:id", async (req, res) => {
   try {
@@ -90,21 +104,6 @@ app.get("/api/doctors/:id", async (req, res) => {
       message: error.message,
     });
   }
-});
-app.get("/api/doctors", async (req, res) => {
-  const query = {};
-
-  if (req.query.doctorId) {
-    query.doctorId = req.query.doctorId;
-  }
-
-  const result = await doctorCollection.find(query).toArray();
-  console.log("Result:", result);
-
-  res.json({
-    success: true,
-    data: result,
-  });
 });
 
 app.post("/api/doctors", async (req, res) => {
@@ -153,6 +152,9 @@ app.post("/api/payments", async (req, res) => {
 
       doctorId: payment.doctorId,
       doctorName: payment.doctorName,
+      doctorImage: payment.doctorImage,
+      doctorHospital: payment.doctorHospital,
+      doctorSpecialization: payment.Specialization,
 
       appointmentDate: payment.appointmentDate,
       appointmentSlot: payment.appointmentSlot,
@@ -171,6 +173,38 @@ app.post("/api/payments", async (req, res) => {
     const result = await paymentCollection.insertOne(createdPayment);
 
     res.send(result);
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+app.get("/api/payments", async (req, res) => {
+  try {
+    const { patientId, doctorId, paymentStatus } = req.query;
+
+    const query = {};
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    if (paymentStatus) {
+      query.paymentStatus = paymentStatus;
+    }
+
+    const payments = await paymentCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.send(payments);
   } catch (error) {
     res.status(500).send({
       success: false,
