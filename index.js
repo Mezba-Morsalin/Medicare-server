@@ -375,6 +375,32 @@ app.patch("/api/reviews/:id", async (req, res) => {
     });
   }
 });
+app.delete("/api/reviews/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await reviewsCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount > 0) {
+      return res.send({
+        success: true,
+        message: "Review deleted successfully",
+      });
+    }
+
+    res.send({
+      success: false,
+      message: "Review not found",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
