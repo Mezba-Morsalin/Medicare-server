@@ -575,6 +575,64 @@ app.get("/api/prescriptions", async (req, res) => {
     });
   }
 });
+
+app.patch("/api/prescriptions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      patientName,
+      diagnosis,
+      symptoms,
+      medicine1,
+      dosage1,
+      frequency1,
+      duration1,
+      medicine2,
+      dosage2,
+      frequency2,
+      duration2,
+      advice,
+      followUp,
+    } = req.body;
+
+    const result = await prescriptionCollection.updateOne(
+      {
+        _id: new ObjectId(id),
+      },
+      {
+        $set: {
+          patientName,
+          diagnosis,
+          symptoms,
+          medicine1,
+          dosage1,
+          frequency1,
+          duration1,
+          medicine2,
+          dosage2,
+          frequency2,
+          duration2,
+          advice,
+          followUp,
+        },
+      }
+    );
+
+    res.send({
+      success: true,
+      message: "Prescription updated successfully",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).send({
+      success: false,
+      message: "Failed to update prescription",
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
