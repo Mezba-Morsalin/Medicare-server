@@ -633,6 +633,35 @@ app.patch("/api/prescriptions/:id", async (req, res) => {
     });
   }
 });
+
+app.delete("/api/prescriptions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await prescriptionCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Prescription not found",
+      });
+    }
+
+    res.send({
+      success: true,
+      message: "Prescription deleted successfully",
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).send({
+      success: false,
+      message: "Failed to delete prescription",
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
