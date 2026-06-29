@@ -662,6 +662,66 @@ app.delete("/api/prescriptions/:id", async (req, res) => {
     });
   }
 });
+
+app.get("/api/all/payments", async (req, res) => {
+  try {
+    const payments = await paymentCollection.find({}).toArray();
+
+    res.status(200).json({
+      success: true,
+      message: "Payments fetched successfully",
+      data: payments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch payments",
+      error: error.message,
+    });
+  }
+});
+
+app.patch("/api/doctors/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["Pending", "Verified", "Rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const result = await doctorCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Doctor ${status} successfully`,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update doctor status",
+      error: error.message,
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
