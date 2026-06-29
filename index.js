@@ -172,7 +172,7 @@ app.post("/api/payments", async (req, res) => {
       doctorName: payment.doctorName,
       doctorImage: payment.doctorImage,
       doctorHospital: payment.doctorHospital,
-      doctorSpecialization: payment.Specialization,
+      doctorSpecialization: payment.doctorSpecialization,
 
       appointmentDate: payment.appointmentDate,
       appointmentSlot: payment.appointmentSlot,
@@ -290,6 +290,32 @@ app.delete("/api/payments/:id", async (req, res) => {
   }
 });
 
+app.patch("/api/my/payments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { appointmentStatus } = req.body;
+
+    const result = await paymentCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          appointmentStatus,
+        },
+      }
+    );
+
+    res.send({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 app.post("/api/reviews", async (req, res) => {
   try {
     const review = req.body;
@@ -312,9 +338,10 @@ app.post("/api/reviews", async (req, res) => {
     });
   }
 });
+
 app.get("/api/reviews", async (req, res) => {
   try {
-    const { patientId } = req.query;
+    const { patientId, doctorId } = req.query;
 
     const query = {};
 
@@ -322,7 +349,14 @@ app.get("/api/reviews", async (req, res) => {
       query.patientId = patientId;
     }
 
-    const reviews = await reviewsCollection.find(query).sort({ createdAt: -1 }).toArray();
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    const reviews = await reviewsCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
 
     res.status(200).send({
       success: true,
@@ -336,6 +370,35 @@ app.get("/api/reviews", async (req, res) => {
     });
   }
 });
+
+app.get("/api/my/payments", async (req, res) => {
+  try {
+    const { patientId, doctorId } = req.query;
+
+    const query = {};
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    const payments = await paymentCollection
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.send(payments);
+  } catch (err) {
+    res.status(500).send({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
 
 app.patch("/api/reviews/:id", async (req, res) => {
   try {
@@ -440,6 +503,26 @@ app.get("/api/home-stats", async (req, res) => {
   }
 });
 
+app.get("/api/all/reviews", async (req, res) => {
+  try {
+    const reviews = await reviewsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    console.log("All Reviews:", reviews); // 👈 এটা যোগ করো
+
+    res.send({
+      success: true,
+      data: reviews,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
