@@ -31,6 +31,7 @@ async function run() {
     const doctorCollection = db.collection('doctors')
     const paymentCollection = db.collection('payments')
     const reviewsCollection = db.collection('reviews')
+    const prescriptionCollection = db.collection('prescription')
 
     app.get('/api/users', async (req, res)=> {
       const result = await userCollection.find().toArray();
@@ -515,6 +516,24 @@ app.get("/api/all/reviews", async (req, res) => {
     res.send({
       success: true,
       data: reviews,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+app.post("/api/prescriptions", async (req, res) => {
+  try {
+    const prescription = req.body;
+
+    const result = await prescriptionCollection.insertOne(prescription);
+
+    res.send({
+      success: true,
+      insertedId: result.insertedId,
+      message: "Prescription created successfully",
     });
   } catch (error) {
     res.status(500).send({
