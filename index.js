@@ -542,6 +542,39 @@ app.post("/api/prescriptions", async (req, res) => {
     });
   }
 });
+
+app.get("/api/prescriptions", async (req, res) => {
+  try {
+    const { doctorId, patientId } = req.query;
+
+    const query = {};
+
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    const prescriptions = await prescriptionCollection
+      .find(query)
+      .sort({ _id: -1 })
+      .toArray();
+
+    res.send({
+      success: true,
+      data: prescriptions,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).send({
+      success: false,
+      message: "Failed to fetch prescriptions",
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
