@@ -38,6 +38,33 @@ async function run() {
       res.json(result)
     });
 
+    app.patch("/api/users/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const result = await userCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `User ${status} successfully`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 
     app.get("/api/all/doctors", async (req, res) => {
   try {
