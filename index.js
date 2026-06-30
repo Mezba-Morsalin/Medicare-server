@@ -770,6 +770,26 @@ app.patch("/api/doctors/:id", async (req, res) => {
     });
   }
 });
+app.get("/api/all/reviews", async (req, res) => {
+  try {
+    const reviews = await reviewCollection
+      .find()
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      data: reviews,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch reviews",
+      error: error.message,
+    });
+  }
+});
     // Send a ping to confirm a successful connection
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
