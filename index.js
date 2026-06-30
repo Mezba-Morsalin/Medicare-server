@@ -32,6 +32,7 @@ async function run() {
     const paymentCollection = db.collection('payments')
     const reviewsCollection = db.collection('reviews')
     const prescriptionCollection = db.collection('prescription')
+    const contactCollection = db.collection("contacts");
 
     app.get('/api/users', async (req, res)=> {
       const result = await userCollection.find().toArray();
@@ -786,6 +787,40 @@ app.get("/api/all/reviews", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch reviews",
+      error: error.message,
+    });
+  }
+});
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields are mandatory.",
+      });
+    }
+
+    const contact = {
+      name,
+      email,
+      subject,
+      message,
+      createdAt: new Date(),
+    };
+
+    const result = await contactCollection.insertOne(contact);
+
+    res.status(201).json({
+      success: true,
+      message: "Message sent successfully.",
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to send message.",
       error: error.message,
     });
   }
