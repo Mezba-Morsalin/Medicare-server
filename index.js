@@ -65,6 +65,27 @@ async function run() {
   }
 });
 
+app.delete("/api/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await userCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 
     app.get("/api/all/doctors", async (req, res) => {
   try {
@@ -538,7 +559,7 @@ app.get("/api/all/reviews", async (req, res) => {
       .sort({ createdAt: -1 })
       .toArray();
 
-    console.log("All Reviews:", reviews); // 👈 এটা যোগ করো
+    console.log("All Reviews:", reviews);
 
     res.send({
       success: true,
@@ -713,7 +734,7 @@ app.patch("/api/doctors/:id", async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!["Pending", "Verified", "Rejected"].includes(status)) {
+    if (!["Pending", "Verified", "Suspended"].includes(status)) {
       return res.status(400).json({
         success: false,
         message: "Invalid status",
