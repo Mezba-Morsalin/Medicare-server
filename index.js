@@ -518,7 +518,9 @@ app.delete("/api/reviews/:id", async (req, res) => {
 
 app.get("/api/home-stats", async (req, res) => {
   try {
-    const totalDoctors = await doctorCollection.countDocuments();
+    const totalDoctors = await doctorCollection.countDocuments({
+      status: "Verified",
+    });
 
     const totalPatients = await userCollection.countDocuments({
       role: "patient",
@@ -531,8 +533,10 @@ app.get("/api/home-stats", async (req, res) => {
     const averageRating =
       reviews.length > 0
         ? (
-            reviews.reduce((sum, review) => sum + Number(review.rating), 0) /
-            reviews.length
+            reviews.reduce(
+              (sum, review) => sum + Number(review.rating),
+              0
+            ) / reviews.length
           ).toFixed(1)
         : 0;
 
@@ -771,6 +775,90 @@ app.patch("/api/doctors/:id", async (req, res) => {
     });
   }
 });
+
+app.patch("/api/doctors/:id/verify", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["Pending", "Verified"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const result = await doctorCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Doctor ${status} successfully`,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update verification status",
+      error: error.message,
+    });
+  }
+});
+app.patch("/api/doctors/:id/suspend", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["Verified", "Suspended"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const result = await doctorCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Doctor ${status} successfully`,
+      data: result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update suspension status",
+      error: error.message,
+    });
+  }
+});
+
 app.get("/api/all/reviews", async (req, res) => {
   try {
     const reviews = await reviewCollection
