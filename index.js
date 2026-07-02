@@ -612,6 +612,26 @@ app.get("/api/all/reviews",verifyToken, async (req, res) => {
     });
   }
 });
+app.get("/api/home/reviews", async (req, res) => {
+  try {
+    const reviews = await reviewsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    console.log("All Reviews:", reviews);
+
+    res.send({
+      success: true,
+      data: reviews,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 app.post("/api/prescriptions",verifyToken, async (req, res) => {
   try {
     const prescription = req.body;
