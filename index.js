@@ -5,6 +5,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const app = express();
 dotenv.config()
 
@@ -21,6 +22,40 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+const { decodeProtectedHeader } = require("jose-cjs");
+
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+);
+
+const verifyToken = async (req, res, next) => {
+  const header = req.headers.authorization;
+
+  if (!header) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = header.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+
+    req.user = payload;
+
+    next();
+  } catch (err) {
+    console.log(err);
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -34,12 +69,12 @@ async function run() {
     const prescriptionCollection = db.collection('prescription')
     const contactCollection = db.collection("contacts");
 
-    app.get('/api/users', async (req, res)=> {
+    app.get('/api/users',verifyToken, async (req, res)=> {
       const result = await userCollection.find().toArray();
       res.json(result)
     });
 
-    app.patch("/api/users/:id/status", async (req, res) => {
+    app.patch("/api/users/:id/status",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -66,7 +101,7 @@ async function run() {
   }
 });
 
-app.delete("/api/users/:id", async (req, res) => {
+app.delete("/api/users/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -88,7 +123,7 @@ app.delete("/api/users/:id", async (req, res) => {
 });
 
 
-    app.get("/api/all/doctors", async (req, res) => {
+    app.get("/api/all/doctors",verifyToken, async (req, res) => {
   try {
     const doctors = await doctorCollection.find({}).toArray();
 
@@ -132,7 +167,7 @@ app.delete("/api/users/:id", async (req, res) => {
   }
 });
 
-app.get("/api/doctor", async (req, res) => {
+app.get("/api/doctor",verifyToken, async (req, res) => {
   const query = {};
 
   if (req.query.doctorId) {
@@ -174,7 +209,7 @@ app.get("/api/doctors/:id", async (req, res) => {
   }
 });
 
-app.post("/api/doctors", async (req, res) => {
+app.post("/api/doctors",verifyToken, async (req, res) => {
   try {
     const doctorData = req.body;
 
@@ -249,7 +284,7 @@ app.post("/api/payments", async (req, res) => {
   }
 });
 
-app.get("/api/payments", async (req, res) => {
+app.get("/api/payments",verifyToken, async (req, res) => {
   try {
     const { patientId, doctorId, paymentStatus } = req.query;
 
@@ -280,7 +315,7 @@ app.get("/api/payments", async (req, res) => {
     });
   }
 });
-app.patch("/api/payments/:id", async (req, res) => {
+app.patch("/api/payments/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -313,7 +348,7 @@ app.patch("/api/payments/:id", async (req, res) => {
     });
   }
 });
-app.delete("/api/payments/:id", async (req, res) => {
+app.delete("/api/payments/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -340,7 +375,7 @@ app.delete("/api/payments/:id", async (req, res) => {
   }
 });
 
-app.patch("/api/my/payments/:id", async (req, res) => {
+app.patch("/api/my/payments/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { appointmentStatus } = req.body;
@@ -366,7 +401,7 @@ app.patch("/api/my/payments/:id", async (req, res) => {
   }
 });
 
-app.post("/api/reviews", async (req, res) => {
+app.post("/api/reviews",verifyToken, async (req, res) => {
   try {
     const review = req.body;
 
@@ -389,7 +424,7 @@ app.post("/api/reviews", async (req, res) => {
   }
 });
 
-app.get("/api/reviews", async (req, res) => {
+app.get("/api/reviews",verifyToken, async (req, res) => {
   try {
     const { patientId, doctorId } = req.query;
 
@@ -421,7 +456,7 @@ app.get("/api/reviews", async (req, res) => {
   }
 });
 
-app.get("/api/my/payments", async (req, res) => {
+app.get("/api/my/payments",verifyToken, async (req, res) => {
   try {
     const { patientId, doctorId } = req.query;
 
@@ -450,7 +485,7 @@ app.get("/api/my/payments", async (req, res) => {
 });
 
 
-app.patch("/api/reviews/:id", async (req, res) => {
+app.patch("/api/reviews/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const review = req.body;
@@ -489,7 +524,7 @@ app.patch("/api/reviews/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/reviews/:id", async (req, res) => {
+app.delete("/api/reviews/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -557,7 +592,7 @@ app.get("/api/home-stats", async (req, res) => {
   }
 });
 
-app.get("/api/all/reviews", async (req, res) => {
+app.get("/api/all/reviews",verifyToken, async (req, res) => {
   try {
     const reviews = await reviewsCollection
       .find({})
@@ -577,7 +612,7 @@ app.get("/api/all/reviews", async (req, res) => {
     });
   }
 });
-app.post("/api/prescriptions", async (req, res) => {
+app.post("/api/prescriptions",verifyToken, async (req, res) => {
   try {
     const prescription = req.body;
 
@@ -596,7 +631,7 @@ app.post("/api/prescriptions", async (req, res) => {
   }
 });
 
-app.get("/api/prescriptions", async (req, res) => {
+app.get("/api/prescriptions",verifyToken, async (req, res) => {
   try {
     const { doctorId, patientId } = req.query;
 
@@ -629,7 +664,7 @@ app.get("/api/prescriptions", async (req, res) => {
   }
 });
 
-app.patch("/api/prescriptions/:id", async (req, res) => {
+app.patch("/api/prescriptions/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -687,7 +722,7 @@ app.patch("/api/prescriptions/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/prescriptions/:id", async (req, res) => {
+app.delete("/api/prescriptions/:id",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -716,7 +751,7 @@ app.delete("/api/prescriptions/:id", async (req, res) => {
   }
 });
 
-app.get("/api/all/payments", async (req, res) => {
+app.get("/api/all/payments",verifyToken, async (req, res) => {
   try {
     const payments = await paymentCollection.find({}).toArray();
 
@@ -776,7 +811,7 @@ app.patch("/api/doctors/:id", async (req, res) => {
   }
 });
 
-app.patch("/api/doctors/:id/verify", async (req, res) => {
+app.patch("/api/doctors/:id/verify",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -817,7 +852,7 @@ app.patch("/api/doctors/:id/verify", async (req, res) => {
     });
   }
 });
-app.patch("/api/doctors/:id/suspend", async (req, res) => {
+app.patch("/api/doctors/:id/suspend",verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -859,7 +894,7 @@ app.patch("/api/doctors/:id/suspend", async (req, res) => {
   }
 });
 
-app.get("/api/all/reviews", async (req, res) => {
+app.get("/api/all/reviews",verifyToken, async (req, res) => {
   try {
     const reviews = await reviewCollection
       .find()
